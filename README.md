@@ -1,2 +1,2 @@
-# arch-zoo
-A zoo of neural nets model architectures
+# training-zoo
+A zoo of neural nets model architectures and their trainings
