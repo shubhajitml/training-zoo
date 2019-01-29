@@ -8,6 +8,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim import lr_scheduler
 import torchvision
 from torchvision import datasets, transforms
 import numpy as np
@@ -132,9 +133,80 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     model.load_state_dict(best_model_wts)
     return model
 
-    
+
+def visualize_model(model, num_images=6):
+    was_training = model.training
+    model.eval()
+    images_so_far = 0
+    fig = plt.figure()
+
+    with torch.no_grad():
+        for i, (inputs, labels) in enumerate(data_loaders['val']):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+
+            for j in range(inputs.size()[0]):
+                images_so_far += 1
+                ax = plt.subplot(num_images//2, 2, images_so_far)
+                ax.axis('off')
+                ax.set_title('predicted: {}'.format(class_names[preds[j]]))
+                show_images(inputs.cpu().data[j])
+
+                if images_so_far == num_images:
+                    model.train(mode=was_training)
+                    return
+        model.train(mode=was_training)
+
+# Finetuning the convnet
+# Load a pretrained model and reset final fully connected layer.
+model_ftn = resnet_models.resnet18(pretrained=True)
+num_fltrs = model_ftn.fc.in_features
+model_ftn.fc = nn.Linear(num_fltrs, 2)
+model_ftn = model_ftn.to(device)
+
+criterion = nn.CrossEntropyLoss()
+
+optimizer_ftn = optim.SGD(model_ftn.parameters(), lr=1e-3, momentum=0.9)
+
+# Decay LR by a factor of 0.1 every 7 epochs
+exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ftn, step_size=7, gamma=0.1)
 
 
-# Build the model
-# Specify Optimizer and Loss function
-# Train and Validate the model
+# Train and evaluate
+model_ftn = train_model(model_ftn, criterion, optimizer_ftn, exp_lr_scheduler, num_epochs=25)
+
+# Visualize the model
+visualize_model(model_ftn)
+
+
+# ConvNet as fixed feature extractor
+# ----------------------------------
+#
+# Here, we need to freeze all the network except the final layer. We need
+# to set ``requires_grad == False`` to freeze the parameters so that the
+# gradients are not computed in ``backward()``.
+
+model_conv = resnet_models.resnet18(pretrained=True)
+for param in model_conv.parameters():
+    param.requires_grad = False
+
+num_fltrs = model_conv.fc.in_features
+model_conv.fc = nn.Linear(num_fltrs, 2)
+model_conv = model_conv.to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=1e-3, momentum=0.9)
+
+# Decay LR by a factor of 0.1 every 7 epochs
+exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
+
+# Train and evaluate
+model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=25)
+
+visualize_model(model_conv)
+
+plt.ioff()
+plt.show()
