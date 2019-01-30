@@ -125,10 +125,10 @@ class Resnet(nn.Module):
         out = self.relu(out)
         out = self.maxpool(out)
 
-        out = self.conv2x_layer(out)
-        out = self.conv3x_layer(out)
-        out = self.conv4x_layer(out)
-        out = self.conv5x_layer(out)
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
 
         out = self.avgpool(out)
         out = out.view(out.size(0), -1) # reshaping dimension to (dim,1) from (dim,1,1)
