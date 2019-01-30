@@ -80,7 +80,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         print(f'Epoch : {epoch+1}/{num_epochs}')
         print("-" * 2)
 
-        for phase in ["train", "valid"]:
+        for phase in ["train", "val"]:
             if phase == "train":
                 scheduler.step()
                 model.train() # set model to training mode
@@ -91,7 +91,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             running_corrects = 0 
 
             # Iterate over data
-            for inputs, labels in data_loaders(phase):
+            for inputs, labels in data_loaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
             
@@ -120,7 +120,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             print(f'{phase} loss: {epoch_loss:.4f}, acc: {epoch_acc:.4f}')
 
             # deep copy the model 
-            if phase == 'valid' and epoch_acc > best_acc:
+            if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
 
