@@ -97,12 +97,12 @@ class Resnet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.conv2x_layer = self._stack_blocks(block, 64, layers[0])
-        self.conv3x_layer = self._stack_blocks(block, 128, layers[1], stride=2)
-        self.conv4x_layer = self._stack_blocks(block, 256, layers[2], stride=2)
-        self.conv5x_layer = self._stack_blocks(block, 512, layers[3], stride=2)
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(512 * block.block_expansion, num_classes)
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(512 * block.expansion, num_classes)
 
     def _stack_blocks(self, block, channels, num_blocks, stride=1):
         downsample = None
