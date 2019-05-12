@@ -5,6 +5,9 @@
 
 ### Custom Directories ###
 data/
+.ref/
+# VS Code #
+.vscode/
 
 ### Linux ###
 *~
